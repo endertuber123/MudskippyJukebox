@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mudskippy's Jukebox</title>
+        <link rel="icon" href="0vallerRenderRound.png">
+        <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+        <style>
+        body {
+            font-family: 'Roboto';
+        }
+        button{
+            background-color:#1B3637;
+            border: none;
+            color:#8ae0f7;
+            font-weight: bold;
+            padding: 15px;
+        }
+        button.small{
+            background-color:#1B3637;
+            border: none;
+            color:#8ae0f7;
+            padding: 5px;
+        }
+        input{
+            background-color:#1B3637;
+            border: none;
+            color:#8ae0f7;
+        }
+        </style>
+    </head>
+    <h1><center>Mudskippy's Jukebox</center></h1>
+    <body style="background-color:#131919; color:#8ae0f7; font-family: 'Roboto';"><center>
+        <div id="player"></div>
+
+        <br></br>
+        <text>Mode: </text> <text id="mode_text" style="color:#8ae0f7;">NONE</text>
+        <br></br>
+        <text>WebSocket Status: </text> <text id="status_text">Uninitialized</text> <button class="small" type="button" onclick="resetGlobalWebSocket()">Re-attempt Connection</button>
+        <br></br>
+
+        <button type="button" id="manualButton" onclick="modeManual()">Manual</button>
+        <button type="button" id="automaticButton" onclick="modeAutomatic()">Automatic</button>
+
+        <br></br>
+
+        <text>YouTube URL:</text> <input type="url" id="inputUrl"></input> <button class="small" type="button" id="changer" onclick="applyVideo()">Apply URL</button>
+
+        <script>
+            const socket = new WebSocket('ws://localhost:2588');
+            setupSocket(socket);
+
+            let mode = "NONE";
+
+            const discIDs = ["quXacw3z0dY", //Attack of the Killer Beast
+                "VZA4luIhcu8",  //13
+                "zK5ZdzRnQE8", //Cat
+                "JQw8MEqhMRA", //Blocks
+                "cCibTj6drhM", //Chirp
+                "UqKcX87h3c0", //Far
+                "xmBfruermmo", //Mall
+                "ldZSvzVAHp8", //Mellohi
+                "0E5l2GHBxB8", //Stal
+                "d6tV0cr9zYI", //Strad
+                "zqw8FylO_Y8", //Ward
+                "aLf9lfbI5Kg", //11
+                "sBl9qcaQos4", //Wait
+                "R9eC3WBRKeY", //Pigstep
+                "kK81m-A3qpU", //Otherside
+                "QwPLGUw7nwg"]; //5
+            
+
+            
+            
+            
+
+            //These two are for handling chatbox messages to be sent to VRChat, specifically making sure they keep being sent.
+            let intervalSender = null;
+            let intervalMessage = "";
+
+            let tag = document.createElement('script');
+
+            tag.src = "https://www.youtube.com/iframe_api";
+            let firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            //The section responsible for building the video player.
+            let player;
+            function onYouTubeIframeAPIReady(){
+                player = new YT.Player('player', {
+                    height: '390',
+                    width: '640',
+                    videoId: 'WhwqBUCYQO0', //This video is unrelated to the playlist, and won't really play in any scenario.
+                    playerVars: {
+                        listType: 'playlist',
+                        list: 'PLeFG7BiHU9yoBHzDfng862M2N0WOJmYPf',
+                        autoplay: 1,
+                        playsinline: 1,
+                        loop: 1
+                    },
+                    events: {
+                        'onReady' : onPlayerReady,
+                        'onStateChange' : onPlayerStateChange
+                    }
+                });
+            }
+
+            //Functions for video player.
+            function onPlayerReady(event) {
+                player.playVideo();
+            }
+
+            function onPlayerStateChange(event) {   //This causes the video to loop if there's no playlist. This is done because the loop playerVar doesn't work for some reason.
+                if(event.data == YT.PlayerState.ENDED){
+                    player.playVideo();
+                }
+            }
+
+            function stopVideo(){   //Fully stops the video.
+                player.stopVideo();
+            }
+
+            function toggleVideoState(){    //Toggles between video being paused and video being played.
+                if(player.getPlayerState() == 1) player.pauseVideo();
+                else if(player.getPlayerState() == 2) player.playVideo();
+            }
+
+            function applyVideo(){ //Autoplays when video is loaded. Noted.
+                const returnedId = youtube_parser(document.getElementById("inputUrl").value);
+                if(returnedId.length==11){
+                    player.loadVideoById(returnedId);
+                } else if(returnedId){
+                    player.loadPlaylist({
+                        listType: 'playlist',
+                        list: returnedId
+                    });
+                    console.log(returnedId);
+                }
+            }
+
+            function previousVideo(){   //Self explanatory, plays previous video if there's a playlist.
+                player.previousVideo();
+            }
+
+            function nextVideo(){   //Self explanatory, plays next video if there's a playlist.
+                player.nextVideo();
+            }
+
+            //Other functions.
+            function youtube_parser(url){   //Original function is from Stack Overflow by lasnv. Should extract video ID from a url.
+                const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+                if(url.includes("list=")){
+                    return(playlist_id(url));
+                }
+                const match = url.match(regExp);
+                return (match&&match[7].length==11)? match[7] : false;
+            }
+
+            function playlist_id(url) {     //Original function is from Stack Overflow by Abdo-Host.
+                const regPlaylist = /[?&]list=([^#\&\?]+)/;
+                const match = url.match(regPlaylist);
+                return match[1];
+            }
+
+            function setupSocket(localSocket){  //Used to attach events to the Web Socket.
+                localSocket.onopen = (event) => {    //This writes to an HTML text element to let the user know that the socket is opened.
+                    document.getElementById("status_text").textContent = "Connected/Open";
+                };
+
+                localSocket.onmessage = (event) => { //This allows for receiving of messages from Node.js.
+                    if(mode == "AUTOMATIC") switch(event.data){
+                        case "Next":
+                            nextVideo();
+                            console.log("Next Received.");
+                            break;
+                        case "Pause":
+                            toggleVideoState();
+                            console.log("Pause Received.");
+                            break;
+                        case "Back":
+                            previousVideo();
+                            console.log("Back Received.");
+                            break;
+                        default:
+                            if(event.data.includes("music_disc")){
+                                let extractedNum = event.data.replace("music_disc_", "");
+                                let indexNum = parseInt(extractedNum);
+                                player.loadVideoById(discIDs[indexNum]);
+                                console.log("Disc Received.");
+                            }
+                            break;
+                    }
+                };
+
+                localSocket.onclose = (event) => {
+                    document.getElementById("status_text").textContent = "Disconnected/Closed";
+                };
+
+                localSocket.onerror = (event) => {
+                    console.log("NOTE: This likely occurred due to the socket being opened before NodeBridge.js was ready. Make sure to open NodeBridge.js first, then try again.");
+                }
+            }
+
+            function resetWebSocket(inputSocket, url){  //Could I have just built this in to the resetGlobalWebSocket()? Probably.
+                if(inputSocket.readyState === WebSocket.CLOSED){
+                    inputSocket = new WebSocket(url);
+                    setupSocket(inputSocket);
+                } else{
+                    console.log("Socket has to be closed to reopen.")
+                }
+            }
+
+            function resetGlobalWebSocket(){ resetWebSocket(socket, 'ws://localhost:2588'); }   //For attaching to a button element. 
+
+            //Functions for handling the Manual and Automatic modes.
+
+            function modeManual(){  //Function sets program to Manual. This is for if you have to play from YouTube directly to get audio. (Most Official Music Videos won't play in embed).
+                if(intervalSender != null) clearInterval(intervalSender);
+                intervalSender = setInterval(sendManual, 2000);
+                mode = "MANUAL";
+                document.getElementById("mode_text").textContent = mode;
+            }
+
+            function modeAutomatic(){   //Function sets program to Automatic. This is for videos that work embed. If it doesn't, use Manual and play the video in another tab.
+                if(intervalSender != null) clearInterval(intervalSender);
+                intervalSender = setInterval(sendAutomatic, 2000);
+                mode = "AUTOMATIC";
+                document.getElementById("mode_text").textContent = mode;
+            }
+
+            function sendManual(){  //Function for sending a constant message.
+                const tempElement = document.getElementById("message_text");
+                if(socket.readyState == WebSocket.OPEN) socket.send("Manual Mode: Levers and Discs will not work.");
+            }
+
+            function sendAutomatic(){   //Function for sending video title.
+                let playerStatus = "";
+                switch(player.getPlayerState()){
+                    case 1:
+                        playerStatus = "Playing";
+                        break;
+                    case 2:
+                        playerStatus = "Paused";
+                        break;
+                    default:
+                        playerStatus = "Loaded";
+                        break;
+                }
+                const tempCurrent = player.getCurrentTime();
+                const tempDuration = player.getDuration();
+                const timeStatus = Math.floor(tempCurrent / 60).toString().padStart(2, '0') + ":" + Math.floor(tempCurrent % 60).toString().padStart(2, '0') + " / " + Math.floor(tempDuration / 60).toString().padStart(2, '0') + ":" + Math.floor(tempDuration % 60).toString().padStart(2, '0');
+                if(socket.readyState == WebSocket.OPEN) socket.send(playerStatus + ": " + player.getVideoData().title + " || " + timeStatus);
+            }
+
+        </script>
+    </center></body>
+</html>
