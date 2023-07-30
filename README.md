@@ -13,6 +13,8 @@ This has only been tested on Windows 11 and Google Chrome. Results may vary on d
 
 4: Probably goes without saying, but make sure to extract the files if you download this as a zip folder.
 
+5: While in the folder containing the code, you may need to run 'npm install' to get the dependencies. The only direct dependency the script has is the "osc" module, but that may have it's own dependencies.
+
 ## Setup Instructions
 1: You may either attempt to use the scuffed .sh file, or just manually run NodeBridge.js using "node NodeBridge.js" in a command prompt.
 
