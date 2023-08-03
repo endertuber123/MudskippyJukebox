@@ -124,8 +124,12 @@
                 else if(player.getPlayerState() == 2) player.playVideo();
             }
 
-            function applyVideo(){ //Autoplays when video is loaded. Noted.
-                const returnedId = youtube_parser(document.getElementById("inputUrl").value);
+            function applyVideo(){ //Used by the "Apply URL" button.
+                applyVideoURL(document.getElementById("inputUrl").value)
+            }
+
+            function applyVideoURL(localURL){ //Autoplays when video is loaded. Noted.
+                const returnedId = youtube_parser(localURL);
                 if(returnedId.length==11){
                     player.loadVideoById(returnedId);
                 } else if(returnedId){
@@ -180,12 +184,18 @@
                             previousVideo();
                             console.log("Back Received.");
                             break;
+                        case "Restart":
+                            player.seekTo(0);
+                            console.log("Restart Received.")
                         default:
                             if(event.data.includes("music_disc")){
                                 let extractedNum = event.data.replace("music_disc_", "");
                                 let indexNum = parseInt(extractedNum);
                                 player.loadVideoById(discIDs[indexNum]);
                                 console.log("Disc Received.");
+                            } else if(event.data.includes("URL:")){
+                                let extractedURL = event.data.replace("URL:","");
+                                applyVideoURL(extractedURL);
                             }
                             break;
                     }

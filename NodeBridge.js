@@ -55,7 +55,7 @@ clientPort.on('message', function (msg) { //A bit of a mess here. This interpret
         wss.clients.forEach((client) =>{
           client.send("Next");
         });
-        console.log("Next Sent!");
+        console.log("Next Sent from VRChat!");
       }
       break;
     case "/avatar/parameters/Pause_Angle":
@@ -65,7 +65,7 @@ clientPort.on('message', function (msg) { //A bit of a mess here. This interpret
         wss.clients.forEach((client) =>{
           client.send("Pause");
         });
-        console.log("Pause Sent!");
+        console.log("Pause Sent from VRChat!");
       }
       break;
     case "/avatar/parameters/Back_Angle":
@@ -75,11 +75,41 @@ clientPort.on('message', function (msg) { //A bit of a mess here. This interpret
         wss.clients.forEach((client) =>{
           client.send("Back");
         });
-        console.log("Back Sent!");
+        console.log("Back Sent from VRChat!");
       }
+    //This section is for the VRChat Remote Control, or the VRCRC.
+    case "/VRCRC/NextTrack":
+      wss.clients.forEach((client) =>{
+        client.send("Next");
+      });
+      console.log("Next Sent from VRCRC!");
       break;
-    //The discs each have a number in their name. This number is used to identify what disc has been inserted so the HTML can tell what track to play.
+    case "/VRCRC/PlayPauseTrack":
+      wss.clients.forEach((client) =>{
+        client.send("Pause");
+      });
+      console.log("Pause Sent from VRCRC!");
+      break;
+    case "/VRCRC/PreviousTrack":
+      wss.clients.forEach((client) =>{
+        client.send("Back");
+      });
+      console.log("Back Sent from VRCRC!");
+      break;
+    case "/VRCRC/RestartTrack":
+      wss.clients.forEach((client) =>{
+        client.send("Restart");
+      });
+      console.log("Restart Sent from VRCRC!");
+      break;
+    case "/VRCRC/YouTubeURL":
+      wss.clients.forEach((client) =>{
+        client.send("URL:" + msg.args[0].toString());
+      });
+      console.log(msg.args[0].toString() +" sent from VRCRC!")
+      break;
     default:
+      //The discs each have a number in their name. This number is used to identify what disc has been inserted so the HTML can tell what track to play.
       if(msg.address.includes("music_disc") && msg.args[0] == true){
         const tempAddress = msg.address.replace("/avatar/parameters/", "");
         wss.clients.forEach((client) =>{
