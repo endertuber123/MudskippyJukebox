@@ -52,21 +52,21 @@
             let mode = "NONE";
 
             const discIDs = ["quXacw3z0dY", //Attack of the Killer Beast
-                "VZA4luIhcu8",  //13
-                "zK5ZdzRnQE8", //Cat
-                "JQw8MEqhMRA", //Blocks
-                "cCibTj6drhM", //Chirp
-                "UqKcX87h3c0", //Far
-                "xmBfruermmo", //Mall
-                "ldZSvzVAHp8", //Mellohi
-                "0E5l2GHBxB8", //Stal
-                "d6tV0cr9zYI", //Strad
-                "zqw8FylO_Y8", //Ward
-                "aLf9lfbI5Kg", //11
-                "sBl9qcaQos4", //Wait
-                "R9eC3WBRKeY", //Pigstep
-                "kK81m-A3qpU", //Otherside
-                "QwPLGUw7nwg"]; //5
+                "https://www.youtube.com/watch?v=VZA4luIhcu8",  //13
+                "https://www.youtube.com/watch?v=zK5ZdzRnQE8", //Cat
+                "https://www.youtube.com/watch?v=JQw8MEqhMRA", //Blocks
+                "https://www.youtube.com/watch?v=cCibTj6drhM", //Chirp
+                "https://www.youtube.com/watch?v=UqKcX87h3c0", //Far
+                "https://www.youtube.com/watch?v=xmBfruermmo", //Mall
+                "https://www.youtube.com/watch?v=ldZSvzVAHp8", //Mellohi
+                "https://www.youtube.com/watch?v=0E5l2GHBxB8", //Stal
+                "https://www.youtube.com/watch?v=d6tV0cr9zYI", //Strad
+                "https://www.youtube.com/watch?v=zqw8FylO_Y8", //Ward
+                "https://www.youtube.com/watch?v=aLf9lfbI5Kg", //11
+                "https://www.youtube.com/watch?v=sBl9qcaQos4", //Wait
+                "https://www.youtube.com/watch?v=R9eC3WBRKeY", //Pigstep
+                "https://www.youtube.com/watch?v=kK81m-A3qpU", //Otherside
+                "https://www.youtube.com/watch?v=QwPLGUw7nwg"]; //5
             
 
             
@@ -132,11 +132,13 @@
                 const returnedId = youtube_parser(localURL);
                 if(returnedId.length==11){
                     player.loadVideoById(returnedId);
+                    if(socket.readyState == WebSocket.OPEN) socket.send("Single");
                 } else if(returnedId){
                     player.loadPlaylist({
                         listType: 'playlist',
                         list: returnedId
                     });
+                    if(socket.readyState == WebSocket.OPEN) socket.send("Playlist");
                     console.log(returnedId);
                 }
             }
@@ -191,7 +193,7 @@
                             if(event.data.includes("music_disc")){
                                 let extractedNum = event.data.replace("music_disc_", "");
                                 let indexNum = parseInt(extractedNum);
-                                player.loadVideoById(discIDs[indexNum]);
+                                applyVideoURL(discIDs[indexNum]);
                                 console.log("Disc Received.");
                             } else if(event.data.includes("URL:")){
                                 let extractedURL = event.data.replace("URL:","");
@@ -228,6 +230,7 @@
                 intervalSender = setInterval(sendManual, 2000);
                 mode = "MANUAL";
                 document.getElementById("mode_text").textContent = mode;
+                if(socket.readyState == WebSocket.OPEN) socket.send("Manual");
             }
 
             function modeAutomatic(){   //Function sets program to Automatic. This is for videos that work embed. If it doesn't, use Manual and play the video in another tab.
@@ -235,6 +238,7 @@
                 intervalSender = setInterval(sendAutomatic, 2000);
                 mode = "AUTOMATIC";
                 document.getElementById("mode_text").textContent = mode;
+                if(socket.readyState == WebSocket.OPEN) socket.send("Automatic");
             }
 
             function sendManual(){  //Function for sending a constant message.
@@ -252,15 +256,16 @@
                         playerStatus = "Paused";
                         break;
                     default:
-                        playerStatus = "Loaded";
+                        playerStatus = "Unavailable";
                         break;
                 }
                 const tempCurrent = player.getCurrentTime();
                 const tempDuration = player.getDuration();
                 const timeStatus = Math.floor(tempCurrent / 60).toString().padStart(2, '0') + ":" + Math.floor(tempCurrent % 60).toString().padStart(2, '0') + " / " + Math.floor(tempDuration / 60).toString().padStart(2, '0') + ":" + Math.floor(tempDuration % 60).toString().padStart(2, '0');
-                if(socket.readyState == WebSocket.OPEN) socket.send(playerStatus + ": " + player.getVideoData().title + " || " + timeStatus);
+                if(socket.readyState == WebSocket.OPEN) socket.send("Chat:" + playerStatus + ": " + player.getVideoData().title + " || " + timeStatus);
             }
 
+            modeAutomatic();
         </script>
     </center></body>
 </html>

@@ -13,22 +13,74 @@ let Pause_Gate = false;
 let Back_Gate = false;
 
 let sockets = [];
-wss.on('connection', function(socket){  //This jargon forwards chatbox messages from the HTML to VRChat.
+wss.on('connection', function(socket){  
   sockets.push(socket);
 
-  socket.on('message', function(msg){
-    clientPort.send({
-      address: "/chatbox/input",
-      args: [
-        {
-          type: "s",
-          value: String(msg)
-        }, {
-          type: "i",
-          value: 1
+  socket.on('message', function(msg){ //This function forwards and interprets messages from HTML to VRChat.
+    switch(msg.toString()){
+      //This sends the parameters to VRChat in order to show/hide appropriate levers.
+      case "Automatic":
+        clientPort.send({
+          address: "/avatar/parameters/isManual",
+          args: [
+            {
+              type: "i",
+              value: 0
+            }
+          ]
+        }, "127.0.0.1", 9000)
+        break;
+      case "Manual":
+        clientPort.send({
+          address: "/avatar/parameters/isManual",
+          args: [
+            {
+              type: "i",
+              value: 1
+            }
+          ]
+        }, "127.0.0.1", 9000)
+        break;
+      case "Playlist":
+        clientPort.send({
+          address: "/avatar/parameters/isSingle",
+          args: [
+            {
+              type: "i",
+              value: 0
+            }
+          ]
+        }, "127.0.0.1", 9000)
+        break;
+      case "Single":
+        clientPort.send({
+          address: "/avatar/parameters/isSingle",
+          args: [
+            {
+              type: "i",
+              value: 1
+            }
+          ]
+        }, "127.0.0.1", 9000)
+        break;
+      default: //This jargon forwards chatbox messages from the HTML to VRChat.
+        if(msg.toString().includes("Chat:")){
+          clientPort.send({
+            address: "/chatbox/input",
+            args: [
+              {
+                type: "s",
+                value: msg.toString().replace("Chat:", "")
+              }, {
+                type: "i",
+                value: 1
+              }
+            ]
+          }, "127.0.0.1", 9000);
         }
-      ]
-    }, "127.0.0.1", 9000);
+        break;
+    }
+    
   });
 
   socket.on('close', function() {

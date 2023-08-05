@@ -44,7 +44,3 @@ Remember: Even in Automatic mode, you can still interact with the embed video it
 
 ## What's with the chatbox?
 The program utilizes VRChat's chatbox to get information across about the video. This includes the video's title and how far through the video is through playing. This information updates every 2 seconds. This also lets players know when the jukebox is in Manual mode. 
-
-## Why does it say "NONE" initially in the webpage?
-Because you haven't selected a mode yet! None mode is basically Manual mode without letting people know about it. To get rid of it, just select a mode.
-
