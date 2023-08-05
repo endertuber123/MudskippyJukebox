@@ -46,6 +46,7 @@
         <text>YouTube URL:</text> <input type="url" id="inputUrl"></input> <button class="small" type="button" id="changer" onclick="applyVideo()">Apply URL</button>
 
         <script>
+            //TODO: Fix weird Playlist looping.
             const socket = new WebSocket('ws://localhost:2588');
             setupSocket(socket);
 
@@ -94,8 +95,7 @@
                         listType: 'playlist',
                         list: 'PLeFG7BiHU9yoBHzDfng862M2N0WOJmYPf',
                         autoplay: 1,
-                        playsinline: 1,
-                        loop: 1
+                        playsinline: 1
                     },
                     events: {
                         'onReady' : onPlayerReady,
@@ -143,8 +143,8 @@
                 }
             }
 
-            function previousVideo(){   //Self explanatory, plays previous video if there's a playlist.
-                player.previousVideo();
+            function previousVideo(){   //Self explanatory, plays previous video if there's a playlist. Won't work if it's the first video of the playlist.
+                if(player.getPlaylistIndex() != 0) player.previousVideo();
             }
 
             function nextVideo(){   //Self explanatory, plays next video if there's a playlist.
