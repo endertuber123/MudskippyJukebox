@@ -129,6 +129,7 @@ clientPort.on('message', function (msg) { //A bit of a mess here. This interpret
         });
         console.log("Back Sent from VRChat!");
       }
+      break;
     //This section is for the VRChat Remote Control, or the VRCRC.
     case "/VRCRC/NextTrack":
       wss.clients.forEach((client) =>{
@@ -168,6 +169,33 @@ clientPort.on('message', function (msg) { //A bit of a mess here. This interpret
           client.send(tempAddress);
         });
         console.log("Disc Sent!");
+      } else if(msg.address.includes("album_") && msg.args[0] == true){ //This section is for discerning album messages.
+        const extractedAlbum = msg.address.replace("/avatar/parameters/album_", "");
+        switch(extractedAlbum){
+          case "bug": //For the Bug Fables Soundtrack.
+            wss.clients.forEach((client) =>{
+              client.send("URL:https://youtube.com/playlist?list=PL6_GDFAu6F50au-JZ1eWa0OnUA1k3cU60");
+            });
+            break;
+          case "delta": //For the Deltarune Soundtrack of chapters 1 and 2.
+            wss.clients.forEach((client) =>{
+              client.send("URL:https://youtube.com/playlist?list=PLEUKcNuP7bDX9RoW3HqYR6EFvWZh12upZ");
+            });
+            break;
+          case "tear": //For the Legend of Zelda: Tears of the Kingdom Soundtrack.
+            wss.clients.forEach((client) =>{
+              client.send("URL:https://youtube.com/playlist?list=PL2XjmdkuVL-3Yybg24FG_aBdLjBE4Quru");
+            });
+            break;
+          case "mystery": //For the Gorilla Tag Soundtrack, I guess.
+            wss.clients.forEach((client) =>{
+              client.send("URL:https://youtube.com/playlist?list=PLExJmNva5sfyn0MenV-2u97hCgvnYmCCh");
+            });
+            break;
+          default:
+            console.log("Unknown album received.");
+            break;
+        }
       }
       break;
   }

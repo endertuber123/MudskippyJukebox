@@ -46,13 +46,14 @@
         <text>YouTube URL:</text> <input type="url" id="inputUrl"></input> <button class="small" type="button" id="changer" onclick="applyVideo()">Apply URL</button>
 
         <script>
-            //TODO: Fix weird Playlist looping.
+            const delay = ms => new Promise(res => setTimeout(res, ms));
             const socket = new WebSocket('ws://localhost:2588');
             setupSocket(socket);
 
             let mode = "NONE";
+            
 
-            const discIDs = ["quXacw3z0dY", //Attack of the Killer Beast
+            const discIDs = ["https://www.youtube.com/watch?v=quXacw3z0dY", //Attack of the Killer Beast. Unused, but here in case index 0 is called.
                 "https://www.youtube.com/watch?v=VZA4luIhcu8",  //13
                 "https://www.youtube.com/watch?v=zK5ZdzRnQE8", //Cat
                 "https://www.youtube.com/watch?v=JQw8MEqhMRA", //Blocks
@@ -75,8 +76,8 @@
             
 
             //These two are for handling chatbox messages to be sent to VRChat, specifically making sure they keep being sent.
-            let intervalSender = null;
-            let intervalMessage = "";
+            const intervalSender = setInterval(sendGlobalChat, 2000);
+            let chatFunction = function(){return "Chat:Booting up...";};
 
             let tag = document.createElement('script');
 
@@ -134,10 +135,7 @@
                     player.loadVideoById(returnedId);
                     if(socket.readyState == WebSocket.OPEN) socket.send("Single");
                 } else if(returnedId){
-                    player.loadPlaylist({
-                        listType: 'playlist',
-                        list: returnedId
-                    });
+                    forceLoadPlaylist(returnedId);
                     if(socket.readyState == WebSocket.OPEN) socket.send("Playlist");
                     console.log(returnedId);
                 }
@@ -149,6 +147,18 @@
 
             function nextVideo(){   //Self explanatory, plays next video if there's a playlist.
                 player.nextVideo();
+            }
+
+            async function forceLoadPlaylist(localPlaylist){    //Youtube's Iframe API can... just be faulty at times. This gets around a playlist loading bug. 
+                player.loadPlaylist({
+                    listType: 'playlist',
+                    list: localPlaylist
+                });
+                await delay(500);
+                player.loadPlaylist({
+                    listType: 'playlist',
+                    list: localPlaylist
+                });
             }
 
             //Other functions.
@@ -198,7 +208,7 @@
                             } else if(event.data.includes("URL:")){
                                 let extractedURL = event.data.replace("URL:","");
                                 applyVideoURL(extractedURL);
-                            }
+                            }s
                             break;
                     }
                 };
@@ -208,7 +218,7 @@
                 };
 
                 localSocket.onerror = (event) => {
-                    console.log("NOTE: This likely occurred due to the socket being opened before NodeBridge.js was ready. Make sure to open NodeBridge.js first, then try again.");
+                    console.log("NOTE: This likely occurred due to the socket being opened before NodeBridge.js was ready. You can rectify this with the Re-Attempt Connection button.");
                 }
             }
 
@@ -226,27 +236,24 @@
             //Functions for handling the Manual and Automatic modes.
 
             function modeManual(){  //Function sets program to Manual. This is for if you have to play from YouTube directly to get audio. (Most Official Music Videos won't play in embed).
-                if(intervalSender != null) clearInterval(intervalSender);
-                intervalSender = setInterval(sendManual, 2000);
                 mode = "MANUAL";
                 document.getElementById("mode_text").textContent = mode;
                 if(socket.readyState == WebSocket.OPEN) socket.send("Manual");
+                chatFunction = chatManual;
             }
 
             function modeAutomatic(){   //Function sets program to Automatic. This is for videos that work embed. If it doesn't, use Manual and play the video in another tab.
-                if(intervalSender != null) clearInterval(intervalSender);
-                intervalSender = setInterval(sendAutomatic, 2000);
                 mode = "AUTOMATIC";
                 document.getElementById("mode_text").textContent = mode;
                 if(socket.readyState == WebSocket.OPEN) socket.send("Automatic");
+                chatFunction = chatAutomatic;
             }
 
-            function sendManual(){  //Function for sending a constant message.
-                const tempElement = document.getElementById("message_text");
-                if(socket.readyState == WebSocket.OPEN) socket.send("Manual Mode: Levers and Discs will not work.");
+            function chatManual(){  //Function for sending a constant message.
+                return "Chat:" + "Manual Mode: Levers and Discs will not work.";
             }
 
-            function sendAutomatic(){   //Function for sending video title.
+            function chatAutomatic(){   //Function for sending video title.
                 let playerStatus = "";
                 switch(player.getPlayerState()){
                     case 1:
@@ -262,7 +269,11 @@
                 const tempCurrent = player.getCurrentTime();
                 const tempDuration = player.getDuration();
                 const timeStatus = Math.floor(tempCurrent / 60).toString().padStart(2, '0') + ":" + Math.floor(tempCurrent % 60).toString().padStart(2, '0') + " / " + Math.floor(tempDuration / 60).toString().padStart(2, '0') + ":" + Math.floor(tempDuration % 60).toString().padStart(2, '0');
-                if(socket.readyState == WebSocket.OPEN) socket.send("Chat:" + playerStatus + ": " + player.getVideoData().title + " || " + timeStatus);
+                return "Chat:" + playerStatus + ": " + player.getVideoData().title + " || " + timeStatus;
+            }
+            
+            function sendGlobalChat(){
+                if(socket.readyState == WebSocket.OPEN) socket.send(chatFunction());
             }
 
             modeAutomatic();
