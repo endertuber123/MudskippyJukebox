@@ -52,7 +52,7 @@
 
             let mode = "NONE";
             
-
+            //These are for the Minecraft music discs that can be inserted into the jukebox.
             const discIDs = ["https://www.youtube.com/watch?v=quXacw3z0dY", //Attack of the Killer Beast. Unused, but here in case index 0 is called.
                 "https://www.youtube.com/watch?v=VZA4luIhcu8",  //13
                 "https://www.youtube.com/watch?v=zK5ZdzRnQE8", //Cat
@@ -70,7 +70,13 @@
                 "https://www.youtube.com/watch?v=kK81m-A3qpU", //Otherside
                 "https://www.youtube.com/watch?v=QwPLGUw7nwg"]; //5
             
-
+            //These are for Albums that can be inserted into the jukebox. Typically associated with Playlists.
+            const albumIDs = {
+                "bug" : "https://youtube.com/playlist?list=PL6_GDFAu6F50au-JZ1eWa0OnUA1k3cU60",
+                "delta" : "https://youtube.com/playlist?list=PLEUKcNuP7bDX9RoW3HqYR6EFvWZh12upZ",
+                "tear" : "https://youtube.com/playlist?list=PL2XjmdkuVL-3Yybg24FG_aBdLjBE4Quru",
+                "mystery" : "https://youtube.com/playlist?list=PLExJmNva5sfyn0MenV-2u97hCgvnYmCCh"
+            }
             
             
             
@@ -182,7 +188,7 @@
                     document.getElementById("status_text").textContent = "Connected/Open";
                 };
 
-                localSocket.onmessage = (event) => { //This allows for receiving of messages from Node.js.
+                localSocket.onmessage = (event) => { //This allows for receiving of messages from the 'Bridge', whether it be Node.js or C#.
                     if(mode == "AUTOMATIC") switch(event.data){
                         case "Next":
                             nextVideo();
@@ -205,10 +211,15 @@
                                 let indexNum = parseInt(extractedNum);
                                 applyVideoURL(discIDs[indexNum]);
                                 console.log("Disc Received.");
-                            } else if(event.data.includes("URL:")){
+                            } else if(event.data.includes("album_")){
+                                let extractedKeyword = event.data.replace("album_", "");
+                                applyVideoURL(albumIDs[extractedKeyword]);
+                                console.log("Album Received.");
+                            }
+                            else if(event.data.includes("URL:")){
                                 let extractedURL = event.data.replace("URL:","");
                                 applyVideoURL(extractedURL);
-                            }s
+                            }
                             break;
                     }
                 };
@@ -218,7 +229,7 @@
                 };
 
                 localSocket.onerror = (event) => {
-                    console.log("NOTE: This likely occurred due to the socket being opened before NodeBridge.js was ready. You can rectify this with the Re-Attempt Connection button.");
+                    console.log("NOTE: This likely occurred due to the socket being opened before the Bridge was ready. You can rectify this with the Re-Attempt Connection button.");
                 }
             }
 
