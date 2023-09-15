@@ -47,7 +47,7 @@
 
         <script>
             const delay = ms => new Promise(res => setTimeout(res, ms));
-            const socket = new WebSocket('ws://localhost:2588');
+            const socket = new WebSocket('ws://localhost:2588/Bridge');
             setupSocket(socket);
 
             let mode = "NONE";
@@ -242,7 +242,7 @@
                 }
             }
 
-            function resetGlobalWebSocket(){ resetWebSocket(socket, 'ws://localhost:2588'); }   //For attaching to a button element. 
+            function resetGlobalWebSocket(){ resetWebSocket(socket, 'ws://localhost:2588/Bridge'); }   //For attaching to a button element. 
 
             //Functions for handling the Manual and Automatic modes.
 
